@@ -9,6 +9,7 @@ deterministic template, zero API keys needed.
 """
 from __future__ import annotations
 
+from claude_client import call_claude
 from config import CLAUDE_MODEL, DEMO_MODE
 from models import AssessmentResult
 
@@ -58,8 +59,6 @@ any specific incident." Plain prose, no markdown headers.
 
 def _claude_narrative(result: AssessmentResult) -> str:
     try:
-        import anthropic
-        client = anthropic.Anthropic()
         matched = [f for f in result.findings if f.matched]
         prompt = (
             f"Facility: {result.facility_label}\n"
@@ -67,17 +66,18 @@ def _claude_narrative(result: AssessmentResult) -> str:
             f"Matched findings: "
             f"{[(f.label, f.severity, f.explanation, f.citation, f.remediation) for f in matched]}\n"
         )
-        msg = client.messages.create(
-            model=CLAUDE_MODEL,
-            max_tokens=600,
+        return call_claude(
+            [{"role": "user", "content": prompt}],
             system=_SYSTEM_PROMPT,
-            messages=[{"role": "user", "content": prompt}],
+            max_tokens=600,
+            model=CLAUDE_MODEL,
         )
-        return msg.content[0].text.strip()
     except Exception:
         # Same doctrine as every Claude call site in this portfolio: catch
-        # Exception (SDK raises TypeError on a missing key, not
-        # anthropic.APIError), fall back rather than crash.
+        # Exception broadly (call_claude() itself wraps SDK failures into
+        # ClaudeCallError, but this stays a broad except -- this CLI must
+        # never crash on a Claude failure, only narrate less), fall back
+        # rather than crash.
         return _demo_narrative(result)
 
 
