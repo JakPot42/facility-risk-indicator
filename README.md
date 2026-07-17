@@ -11,7 +11,6 @@
 > institutional risk patterns from public PERSEREC-adjacent, NISPOM, and
 > GAO research, with citations, full stop.
 
-CLI tool. No web deploy (Render is full at 25/25 — see portfolio CLAUDE.md).
 
 ---
 
